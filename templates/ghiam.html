@@ -1,292 +1,337 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Neon Voice Assistant</title>
-    <style>
-        :root {
-            --primary: #00ff9d;
-            --secondary: #0066ff;
-            --bg: #0a0a16;
-            --glass: rgba(255, 255, 255, 0.05);
-        }
-
-        * {
-            margin: 0;
-            padding: 0;
-            box-sizing: border-box;
-            font-family: 'Segoe UI', sans-serif;
-        }
-
-        body {
-            background: var(--bg);
-            color: white;
-            min-height: 100vh;
-            overflow-x: hidden;
-        }
-
-        /* Floating mic button */
-        #record-button {
-            width: 100px;
-            height: 100px;
-            background: linear-gradient(45deg, var(--primary), var(--secondary));
-            border-radius: 50%;
-            position: fixed;
-            left: 50%;
-            top: 50%;
-            transform: translate(-50%, -50%);
-            cursor: pointer;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            transition: all 0.3s ease;
-            box-shadow: 0 0 30px var(--primary);
-            animation: float 3s ease-in-out infinite;
-        }
-
-        #record-button:hover {
-            transform: translate(-50%, -50%) scale(1.1);
-            box-shadow: 0 0 50px var(--primary);
-        }
-
-        #record-button.recording {
-            animation: pulse 1.5s infinite, float 3s ease-in-out infinite;
-        }
-
-        #record-button svg {
-            width: 40%;
-            height: 40%;
-            fill: white;
-            transition: all 0.3s ease;
-        }
-
-        /* Chat container */
-        #chat-box {
-            position: fixed;
-            bottom: 120px;
-            left: 50%;
-            transform: translateX(-50%);
-            width: 90%;
-            max-width: 800px;
-            background: var(--glass);
-            backdrop-filter: blur(10px);
-            border-radius: 20px;
-            padding: 30px;
-            opacity: 0;
-            visibility: hidden;
-            transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
-        }
-
-        #chat-box.active {
-            opacity: 1;
-            visibility: visible;
-            transform: translate(-50%, -20px);
-        }
-
-        #chat-content {
-            min-height: 150px;
-            max-height: 60vh;
-            overflow-y: auto;
-            padding: 20px;
-            margin-bottom: 20px;
-            border-radius: 10px;
-            background: rgba(0, 0, 0, 0.3);
-        }
-
-        /* Modern menu */
-        #menu {
-            position: fixed;
-            top: 20px;
-            right: 20px;
-            z-index: 1000;
-        }
-
-        #menu-icon {
-            width: 40px;
-            height: 40px;
-            background: var(--glass);
-            backdrop-filter: blur(5px);
-            border-radius: 8px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            cursor: pointer;
-            transition: all 0.3s ease;
-        }
-
-        #menu-icon:hover {
-            background: rgba(255, 255, 255, 0.1);
-        }
-
-        #menu-dropdown {
-            position: absolute;
-            right: 0;
-            top: 50px;
-            background: var(--glass);
-            backdrop-filter: blur(10px);
-            border-radius: 12px;
-            padding: 10px;
-            min-width: 200px;
-            opacity: 0;
-            visibility: hidden;
-            transform: translateY(-10px);
-            transition: all 0.3s ease;
-        }
-
-        #menu-dropdown.show {
-            opacity: 1;
-            visibility: visible;
-            transform: translateY(0);
-        }
-
-        .menu-item {
-            padding: 15px;
-            border-radius: 8px;
-            cursor: pointer;
-            transition: all 0.3s ease;
-            margin: 5px 0;
-        }
-
-        .menu-item:hover {
-            background: rgba(255, 255, 255, 0.1);
-            transform: translateX(5px);
-        }
-
-        /* Animations */
-        @keyframes float {
-            0%, 100% { transform: translate(-50%, -50%) translateY(0); }
-            50% { transform: translate(-50%, -50%) translateY(-10px); }
-        }
-
-        @keyframes pulse {
-            0% { box-shadow: 0 0 0 0 rgba(0, 255, 157, 0.5); }
-            100% { box-shadow: 0 0 0 20px rgba(0, 255, 157, 0); }
-        }
-
-        /* Responsive Design */
-        @media (max-width: 768px) {
-            #record-button {
-                width: 80px;
-                height: 80px;
-                bottom: 30px;
-                top: auto;
-                transform: translateX(-50%);
-                animation: none;
-            }
-
-            #chat-box {
-                bottom: 160px;
-                width: 95%;
-                padding: 20px;
-            }
-
-            #menu {
-                top: 10px;
-                right: 10px;
-            }
-        }
-
-        /* Loading animation */
-        .loader {
-            display: none;
-            width: 24px;
-            height: 24px;
-            border: 3px solid white;
-            border-bottom-color: transparent;
-            border-radius: 50%;
-            animation: rotation 1s linear infinite;
-        }
-
-        @keyframes rotation {
-            0% { transform: rotate(0deg); }
-            100% { transform: rotate(360deg); }
-        }
-    </style>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Neon Voice Assistant</title>
+  <style>
+    :root {
+      --primary: #00ff9d;
+      --secondary: #0066ff;
+      --bg: #0a0a16;
+      --glass: rgba(255, 255, 255, 0.05);
+    }
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+      font-family: 'Segoe UI', sans-serif;
+    }
+    body {
+      background: var(--bg);
+      color: white;
+      min-height: 100vh;
+      overflow-x: hidden;
+    }
+    /* Floating mic button */
+    #record-button {
+      width: 100px;
+      height: 100px;
+      background: linear-gradient(45deg, var(--primary), var(--secondary));
+      border-radius: 50%;
+      position: fixed;
+      left: 50%;
+      top: 50%;
+      transform: translate(-50%, -50%);
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      transition: all 0.3s ease;
+      box-shadow: 0 0 30px var(--primary);
+      animation: float 3s ease-in-out infinite;
+    }
+    #record-button:hover {
+      transform: translate(-50%, -50%) scale(1.1);
+      box-shadow: 0 0 50px var(--primary);
+    }
+    #record-button.recording {
+      animation: pulse 1.5s infinite, float 3s ease-in-out infinite;
+    }
+    #record-button svg {
+      width: 40%;
+      height: 40%;
+      fill: white;
+      transition: all 0.3s ease;
+    }
+    /* Chat container */
+    #chat-box {
+      position: fixed;
+      bottom: 120px;
+      left: 50%;
+      transform: translateX(-50%);
+      width: 90%;
+      max-width: 800px;
+      background: var(--glass);
+      backdrop-filter: blur(10px);
+      border-radius: 20px;
+      padding: 30px;
+      opacity: 0;
+      visibility: hidden;
+      transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+    }
+    #chat-box.active {
+      opacity: 1;
+      visibility: visible;
+      transform: translate(-50%, -20px);
+    }
+    #chat-content {
+      min-height: 150px;
+      max-height: 60vh;
+      overflow-y: auto;
+      padding: 20px;
+      margin-bottom: 20px;
+      border-radius: 10px;
+      background: rgba(0, 0, 0, 0.3);
+    }
+    /* Modern menu */
+    #menu {
+      position: fixed;
+      top: 20px;
+      right: 20px;
+      z-index: 1000;
+    }
+    #menu-icon {
+      width: 40px;
+      height: 40px;
+      background: var(--glass);
+      backdrop-filter: blur(5px);
+      border-radius: 8px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      cursor: pointer;
+      transition: all 0.3s ease;
+    }
+    #menu-icon:hover {
+      background: rgba(255, 255, 255, 0.1);
+    }
+    #menu-dropdown {
+      position: absolute;
+      right: 0;
+      top: 50px;
+      background: var(--glass);
+      backdrop-filter: blur(10px);
+      border-radius: 12px;
+      padding: 10px;
+      min-width: 200px;
+      opacity: 0;
+      visibility: hidden;
+      transform: translateY(-10px);
+      transition: all 0.3s ease;
+    }
+    #menu-dropdown.show {
+      opacity: 1;
+      visibility: visible;
+      transform: translateY(0);
+    }
+    .menu-item {
+      padding: 15px;
+      border-radius: 8px;
+      cursor: pointer;
+      transition: all 0.3s ease;
+      margin: 5px 0;
+    }
+    .menu-item:hover {
+      background: rgba(255, 255, 255, 0.1);
+      transform: translateX(5px);
+    }
+    /* Animations */
+    @keyframes float {
+      0%, 100% { transform: translate(-50%, -50%) translateY(0); }
+      50% { transform: translate(-50%, -50%) translateY(-10px); }
+    }
+    @keyframes pulse {
+      0% { box-shadow: 0 0 0 0 rgba(0, 255, 157, 0.5); }
+      100% { box-shadow: 0 0 0 20px rgba(0, 255, 157, 0); }
+    }
+    /* Responsive Design */
+    @media (max-width: 768px) {
+      #record-button {
+        width: 80px;
+        height: 80px;
+        top: 50%;
+        transform: translate(-50%, -50%);
+        animation: none;
+      }
+      #chat-box {
+        bottom: 160px;
+        width: 95%;
+        padding: 20px;
+      }
+      #menu {
+        top: 10px;
+        right: 10px;
+      }
+    }
+    /* Loading animation */
+    .loader {
+      display: none;
+      width: 24px;
+      height: 24px;
+      border: 3px solid white;
+      border-bottom-color: transparent;
+      border-radius: 50%;
+      animation: rotation 1s linear infinite;
+    }
+    @keyframes rotation {
+      0% { transform: rotate(0deg); }
+      100% { transform: rotate(360deg); }
+    }
+  </style>
 </head>
 <body>
-    <!-- Menu -->
-    <div id="menu">
-        <div id="menu-icon">☰</div>
-        <div id="menu-dropdown">
-            {% for key, model in models.items() %}
-                <div class="menu-item" data-model="{{ key }}">{{ model.name }}</div>
-            {% endfor %}
-        </div>
+  <!-- Menu -->
+  <div id="menu">
+    <div id="menu-icon">☰</div>
+    <div id="menu-dropdown">
+      {% for key, model in models.items() %}
+        <div class="menu-item" data-model="{{ key }}">{{ model.name }}</div>
+      {% endfor %}
     </div>
+  </div>
 
-    <!-- Record Button -->
-    <div id="record-button">
-        <svg viewBox="0 0 24 24">
-            <path d="M12 14c1.66 0 3-1.34 3-3V5c0-1.66-1.34-3-3-3S9 3.34 9 5v6c0 1.66 1.34 3 3 3z"/>
-            <path d="M17 11c0 2.76-2.24 5-5 5s-5-2.24-5-5H5c0 3.53 2.61 6.43 6 6.92V21h2v-3.08c3.39-.49 6-3.39 6-6.92h-2z"/>
-        </svg>
-    </div>
+  <!-- Record Button -->
+  <div id="record-button">
+    <svg viewBox="0 0 24 24">
+      <path d="M12 14c1.66 0 3-1.34 3-3V5c0-1.66-1.34-3-3-3S9 3.34 9 5v6c0 1.66 1.34 3 3 3z"/>
+      <path d="M17 11c0 2.76-2.24 5-5 5s-5-2.24-5-5H5c0 3.53 2.61 6.43 6 6.92V21h2v-3.08c3.39-.49 6-3.39 6-6.92h-2z"/>
+    </svg>
+  </div>
 
-    <!-- Chat Box -->
-    <div id="chat-box">
-        <div id="chat-content"></div>
-        <div class="loader"></div>
-        <button id="back-button" style="margin-top: 20px; padding: 12px 30px; background: var(--primary); border: none; border-radius: 8px; cursor: pointer; color: var(--bg); font-weight: bold;">Speak Again</button>
-    </div>
+  <!-- Chat Box -->
+  <div id="chat-box">
+    <div id="chat-content"></div>
+    <div class="loader"></div>
+    <button id="back-button" style="margin-top: 20px; padding: 12px 30px; background: var(--primary); border: none; border-radius: 8px; cursor: pointer; color: var(--bg); font-weight: bold;">Speak Again</button>
+  </div>
 
-    <script>
-        // Menu Toggle
-        const menuIcon = document.getElementById('menu-icon');
-        const menuDropdown = document.getElementById('menu-dropdown');
-        
-        menuIcon.addEventListener('click', () => {
-            menuDropdown.classList.toggle('show');
-        });
+  <script>
+    // Menu Toggle
+    const menuIcon = document.getElementById('menu-icon');
+    const menuDropdown = document.getElementById('menu-dropdown');
+    menuIcon.addEventListener('click', () => {
+      menuDropdown.classList.toggle('show');
+    });
+    document.querySelectorAll('.menu-item').forEach(item => {
+      item.addEventListener('click', function() {
+        const modelKey = this.getAttribute('data-model');
+        const formData = new FormData();
+        formData.append('model', modelKey);
+        fetch('/set_model', {
+          method: 'POST',
+          body: formData
+        })
+        .then(response => response.json())
+        .then(data => {
+          if (data.status === 'success') {
+            alert('Mô hình chuyển sang: ' + data.model_name);
+          } else {
+            alert('Lỗi: ' + data.message);
+          }
+        })
+        .catch(error => console.error('Error:', error));
+        menuDropdown.classList.remove('show');
+      });
+    });
 
-        // Record Button Logic
-        const recordButton = document.getElementById('record-button');
-        const chatBox = document.getElementById('chat-box');
-        const loader = document.querySelector('.loader');
-        
-        recordButton.addEventListener('click', toggleRecording);
-        
-        async function toggleRecording() {
-            if (!isRecording) {
-                try {
-                    const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
-                    startRecording(stream);
-                } catch (err) {
-                    console.error('Error accessing microphone:', err);
-                    alert('Microphone access denied');
-                }
-            } else {
-                stopRecording();
-            }
+    // Recording logic
+    let isRecording = false;
+    let mediaRecorder;
+    let audioChunks = [];
+    const recordButton = document.getElementById('record-button');
+    const chatBox = document.getElementById('chat-box');
+    const loader = document.querySelector('.loader');
+
+    recordButton.addEventListener('click', toggleRecording);
+
+    async function toggleRecording() {
+      if (!isRecording) {
+        try {
+          const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+          startRecording(stream);
+        } catch (err) {
+          console.error('Error accessing microphone:', err);
+          alert('Microphone access denied');
         }
+      } else {
+        stopRecording();
+      }
+    }
 
-        function startRecording(stream) {
-            mediaRecorder = new MediaRecorder(stream);
-            // ... rest of recording logic ...
-            
-            chatBox.classList.add('active');
-            loader.style.display = 'block';
+    function startRecording(stream) {
+      mediaRecorder = new MediaRecorder(stream);
+      mediaRecorder.start();
+      isRecording = true;
+      recordButton.classList.add('recording');
+      audioChunks = [];
+
+      mediaRecorder.addEventListener('dataavailable', event => {
+        if (event.data.size > 0) {
+          audioChunks.push(event.data);
         }
+      });
 
-        // Enhanced Back Button
-        document.getElementById('back-button').addEventListener('click', () => {
-            chatBox.classList.remove('active');
-            setTimeout(() => {
-                recordButton.style.display = 'flex';
-                loader.style.display = 'none';
-            }, 400);
-        });
+      mediaRecorder.addEventListener('stop', () => {
+        // Ở đây bạn có thể xử lý file âm thanh (ví dụ: chuyển đổi sang text bằng API Speech-to-Text)
+        // Demo: Gửi tin nhắn mẫu cho chatbot
+        sendChatMessage("Audio message recorded.");
+      });
+    }
 
-        // Dynamic Background Effect
-        document.addEventListener('mousemove', (e) => {
-            const x = e.clientX / window.innerWidth;
-            const y = e.clientY / window.innerHeight;
-            document.body.style.background = `
-                radial-gradient(at ${x * 100}% ${y * 100}%, 
-                #1a1a2e 0%, 
-                #0a0a16 50%)
-            `;
-        });
-    </script>
+    function stopRecording() {
+      if (mediaRecorder && isRecording) {
+        mediaRecorder.stop();
+        isRecording = false;
+        recordButton.classList.remove('recording');
+        // Ẩn nút ghi âm và hiển thị khung chat
+        recordButton.style.display = 'none';
+        chatBox.classList.add('active');
+      }
+    }
+
+    function sendChatMessage(message) {
+      fetch('/chat', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ message: message })
+      })
+      .then(response => response.json())
+      .then(data => {
+        if (data.final_answer) {
+          document.getElementById('chat-content').innerText = data.final_answer;
+        } else {
+          document.getElementById('chat-content').innerText = "No response from chatbot.";
+        }
+        loader.style.display = 'none';
+      })
+      .catch(error => {
+        console.error('Error sending message:', error);
+        document.getElementById('chat-content').innerText = "Error occurred.";
+        loader.style.display = 'none';
+      });
+    }
+
+    // Back button: quay lại giao diện ghi âm
+    document.getElementById('back-button').addEventListener('click', () => {
+      chatBox.classList.remove('active');
+      setTimeout(() => {
+        recordButton.style.display = 'flex';
+        loader.style.display = 'none';
+        document.getElementById('chat-content').innerText = "";
+      }, 400);
+    });
+
+    // Dynamic Background Effect
+    document.addEventListener('mousemove', (e) => {
+      const x = e.clientX / window.innerWidth;
+      const y = e.clientY / window.innerHeight;
+      document.body.style.background = `
+        radial-gradient(at ${x * 100}% ${y * 100}%, 
+        #1a1a2e 0%, 
+        #0a0a16 50%)
+      `;
+    });
+  </script>
 </body>
 </html>
