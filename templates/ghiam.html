@@ -48,10 +48,7 @@
     #record-button.recording {
       animation: pulse 1.5s infinite, float 3s ease-in-out infinite;
     }
-    #record-button svg {
-      width: 40%;
-      height: 40%;
-      fill: white;
+    #record-button svg, #record-button span {
       transition: all 0.3s ease;
     }
     /* Chat container */
@@ -193,7 +190,7 @@
 
   <!-- Record Button -->
   <div id="record-button">
-    <!-- Mặc định hiển thị biểu tượng microphone -->
+    <!-- Hiển thị biểu tượng microphone ban đầu -->
     <svg id="mic-icon" viewBox="0 0 24 24">
       <path d="M12 14c1.66 0 3-1.34 3-3V5c0-1.66-1.34-3-3-3S9 3.34 9 5v6c0 1.66 1.34 3 3 3z"/>
       <path d="M17 11c0 2.76-2.24 5-5 5s-5-2.24-5-5H5c0 3.53 2.61 6.43 6 6.92V21h2v-3.08c3.39-.49 6-3.39 6-6.92h-2z"/>
@@ -210,7 +207,7 @@
   </div>
 
   <script>
-    // Menu Toggle
+    // Cài đặt menu
     const menuIcon = document.getElementById('menu-icon');
     const menuDropdown = document.getElementById('menu-dropdown');
     menuIcon.addEventListener('click', () => {
@@ -238,64 +235,76 @@
       });
     });
 
-    // Recording logic
+    // Sử dụng Web Speech API cho nhận diện giọng nói tiếng Việt
+    const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+    let recognition;
+    if (SpeechRecognition) {
+      recognition = new SpeechRecognition();
+      recognition.lang = 'vi-VN'; // Ngôn ngữ tiếng Việt
+      recognition.interimResults = false;
+      recognition.maxAlternatives = 1;
+    } else {
+      alert("Trình duyệt của bạn không hỗ trợ nhận diện giọng nói.");
+    }
+
     let isRecording = false;
-    let mediaRecorder;
-    let audioChunks = [];
     const recordButton = document.getElementById('record-button');
-    const micIcon = document.getElementById('mic-icon');
     const chatBox = document.getElementById('chat-box');
+    const chatContent = document.getElementById('chat-content');
     const loader = document.querySelector('.loader');
 
     recordButton.addEventListener('click', toggleRecording);
 
-    async function toggleRecording() {
+    function toggleRecording() {
       if (!isRecording) {
-        try {
-          const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
-          startRecording(stream);
-        } catch (err) {
-          console.error('Error accessing microphone:', err);
-          alert('Quyền truy cập microphone bị từ chối');
-        }
+        startRecognition();
       } else {
-        stopRecording();
+        stopRecognition();
       }
     }
 
-    function startRecording(stream) {
-      mediaRecorder = new MediaRecorder(stream);
-      mediaRecorder.start();
+    function startRecognition() {
+      if (!recognition) return;
       isRecording = true;
-      // Cập nhật giao diện nút ghi âm để hiển thị "Đang ghi âm..."
       recordButton.classList.add('recording');
+      // Cập nhật nội dung nút ghi âm thành "Đang ghi âm..."
       recordButton.innerHTML = '<span style="font-size: 16px; font-weight: bold;">Đang ghi âm...</span>';
-      audioChunks = [];
-
-      mediaRecorder.addEventListener('dataavailable', event => {
-        if (event.data.size > 0) {
-          audioChunks.push(event.data);
-        }
-      });
-
-      mediaRecorder.addEventListener('stop', () => {
-        // Sau khi dừng ghi âm, gửi tin nhắn mẫu đến chatbot (bạn có thể tích hợp API Speech-to-Text nếu cần)
-        sendChatMessage("Đã ghi âm.");
-      });
+      recognition.start();
     }
 
-    function stopRecording() {
-      if (mediaRecorder && isRecording) {
-        mediaRecorder.stop();
-        isRecording = false;
-        recordButton.classList.remove('recording');
-        // Ẩn nút ghi âm và hiển thị khung chat
-        recordButton.style.display = 'none';
-        chatBox.classList.add('active');
-      }
+    function stopRecognition() {
+      if (!recognition) return;
+      recognition.stop();
+      isRecording = false;
+      recordButton.classList.remove('recording');
     }
+
+    // Khi nhận diện được giọng nói
+    recognition.onresult = function(event) {
+      const transcript = event.results[0][0].transcript;
+      console.log("Transcript:", transcript);
+      sendChatMessage(transcript);
+    };
+
+    recognition.onerror = function(event) {
+      console.error("Speech recognition error:", event.error);
+      alert("Lỗi nhận diện giọng nói: " + event.error);
+      recordButton.innerHTML = `<svg id="mic-icon" viewBox="0 0 24 24">
+          <path d="M12 14c1.66 0 3-1.34 3-3V5c0-1.66-1.34-3-3-3S9 3.34 9 5v6c0 1.66 1.34 3 3 3z"/>
+          <path d="M17 11c0 2.76-2.24 5-5 5s-5-2.24-5-5H5c0 3.53 2.61 6.43 6 6.92V21h2v-3.08c3.39-.49 6-3.39 6-6.92h-2z"/>
+        </svg>`;
+      isRecording = false;
+      recordButton.classList.remove('recording');
+    };
+
+    recognition.onend = function() {
+      // Khi kết thúc nhận diện, ẩn nút ghi âm và hiển thị khung chat
+      recordButton.style.display = 'none';
+      chatBox.classList.add('active');
+    };
 
     function sendChatMessage(message) {
+      loader.style.display = 'block';
       fetch('/chat', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -304,31 +313,30 @@
       .then(response => response.json())
       .then(data => {
         if (data.final_answer) {
-          document.getElementById('chat-content').innerText = data.final_answer;
+          chatContent.innerText = data.final_answer;
         } else {
-          document.getElementById('chat-content').innerText = "Không nhận được phản hồi từ chatbot.";
+          chatContent.innerText = "Không nhận được phản hồi từ chatbot.";
         }
         loader.style.display = 'none';
       })
       .catch(error => {
-        console.error('Error sending message:', error);
-        document.getElementById('chat-content').innerText = "Đã xảy ra lỗi.";
+        console.error("Error sending message:", error);
+        chatContent.innerText = "Đã xảy ra lỗi.";
         loader.style.display = 'none';
       });
     }
 
-    // Back button: quay lại giao diện ghi âm
+    // Xử lý nút Back để quay lại giao diện ghi âm
     document.getElementById('back-button').addEventListener('click', () => {
       chatBox.classList.remove('active');
       setTimeout(() => {
         recordButton.style.display = 'flex';
-        // Khôi phục lại biểu tượng microphone
         recordButton.innerHTML = `<svg id="mic-icon" viewBox="0 0 24 24">
           <path d="M12 14c1.66 0 3-1.34 3-3V5c0-1.66-1.34-3-3-3S9 3.34 9 5v6c0 1.66 1.34 3 3 3z"/>
           <path d="M17 11c0 2.76-2.24 5-5 5s-5-2.24-5-5H5c0 3.53 2.61 6.43 6 6.92V21h2v-3.08c3.39-.49 6-3.39 6-6.92h-2z"/>
         </svg>`;
         loader.style.display = 'none';
-        document.getElementById('chat-content').innerText = "";
+        chatContent.innerText = "";
       }, 400);
     });
 
