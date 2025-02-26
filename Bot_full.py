@@ -5,11 +5,11 @@ from openai import OpenAI
 app = Flask(__name__, template_folder="templates")
 app.secret_key = os.environ.get("SECRET_KEY", "default_secret_key")
 
-# Lấy API key từ biến môi trường
+# Lấy API key từ biến môi trường (không dùng giá trị mặc định)
 API_KEY = os.environ["API_KEY"]
 BASE_URL = "https://api.sree.shop/v1"
 
-# Khởi tạo client OpenAI
+# Khởi tạo client sử dụng OpenAI package với BASE_URL mới
 client = OpenAI(
     api_key=API_KEY,
     base_url=BASE_URL
@@ -60,7 +60,7 @@ def set_model():
     model = request.form.get("model")
     if model in MODELS:
         session["model"] = model
-        session["history"] = []
+        session["history"] = []  # Xóa lịch sử khi chuyển mô hình
         return jsonify({"status": "success", "model": model, "model_name": MODELS[model]["name"]})
     return jsonify({"status": "error", "message": "Model not found"}), 400
 
@@ -88,6 +88,7 @@ def chat():
         history.append({"role": "assistant", "content": reply})
         session["history"] = history
 
+        # Nếu là mô hình DeepSeek, tách phần "Final Answer:" nếu có
         if selected_model_key in ["deepseek_r1", "deepseek_v3"]:
             if "Final Answer:" in reply:
                 reasoning, final_answer = reply.split("Final Answer:", 1)
@@ -102,4 +103,5 @@ def chat():
         return jsonify({"error": "API error", "details": str(e)}), 500
 
 if __name__ == '__main__':
+    # Khi triển khai trên Vercel, Vercel sẽ quản lý việc khởi chạy ứng dụng.
     app.run(debug=True)
